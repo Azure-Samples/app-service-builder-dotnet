@@ -20,7 +20,8 @@ this sample has not been qualified.
 `SAMPLE_GREETING` changes the deliberately public greeting. The app does not
 require credentials or expose environment diagnostics. `builder.yaml` describes
 one .NET 10 web component, listening on port 8080 with `/health` as its health
-check.
+check. The manifest relies on Builder defaults for root routing, port 8080, and
+HTTP 200 as the successful health-check status.
 
 ## Getting Started
 
