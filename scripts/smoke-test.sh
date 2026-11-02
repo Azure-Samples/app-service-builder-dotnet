@@ -51,7 +51,7 @@ assert_response() {
     fi
 }
 
-for mode in unset empty custom; do
+for mode in unset empty custom encoded; do
     if curl --silent --max-time 1 --output /dev/null http://127.0.0.1:8080/; then
         printf 'Port 8080 is already serving HTTP; stop that process before testing.\n' >&2
         exit 1
@@ -61,6 +61,7 @@ for mode in unset empty custom; do
         unset) unset SAMPLE_GREETING; expected="Hello" ;;
         empty) export SAMPLE_GREETING=""; expected="Hello" ;;
         custom) export SAMPLE_GREETING="Welcome"; expected="Welcome" ;;
+        encoded) export SAMPLE_GREETING='<script>alert("hello")</script>&'; expected="$SAMPLE_GREETING" ;;
     esac
 
     env 'Logging__LogLevel__Microsoft.Hosting.Lifetime=Information' \
@@ -86,6 +87,23 @@ for mode in unset empty custom; do
     assert_response "/" 200 "App Service Builder / dotnet-web: $expected"$'\n'
     assert_response "/health" 200 $'OK\n'
     assert_response "/not-found" 404 ""
+    demo_status=$(curl --silent --show-error --max-time 5 \
+        --output "$temp_dir/body" --write-out '%{http_code}' http://127.0.0.1:8080/demo)
+    if [[ "$demo_status" != 200 ]] ||
+        ! grep -Fq '<title>.NET workbench | App Service Builder</title>' "$temp_dir/body" ||
+        ! grep -Fq 'data-path="/health"' "$temp_dir/body"; then
+        printf 'Unexpected /demo response (%s greeting): HTTP %s\n' "$mode" "$demo_status" >&2
+        exit 1
+    fi
+    if [[ "$mode" == encoded ]]; then
+        demo_greeting='&lt;script&gt;alert(&quot;hello&quot;)&lt;/script&gt;&amp;'
+    else
+        demo_greeting="$expected"
+    fi
+    if ! grep -Fq "<h2>$demo_greeting</h2>" "$temp_dir/body"; then
+        printf 'Missing or incorrectly encoded /demo greeting (%s)\n' "$mode" >&2
+        exit 1
+    fi
     stop_app
-    printf 'Passed root, health, and 404 checks with %s SAMPLE_GREETING\n' "$mode"
+    printf 'Passed root, health, 404, and demo checks with %s SAMPLE_GREETING\n' "$mode"
 done

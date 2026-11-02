@@ -15,6 +15,7 @@ this sample has not been qualified.
 | --- | --- |
 | `GET /` | HTTP 200, `App Service Builder / dotnet-web: Hello` followed by a newline |
 | `GET /health` | HTTP 200, `OK` followed by a newline |
+| `GET /demo` | HTTP 200, responsive HTML .NET workbench showing the public greeting and user-triggered requests to `/` and `/health` |
 | Unknown path | HTTP 404 |
 
 `SAMPLE_GREETING` changes the deliberately public greeting. The app does not
@@ -22,6 +23,12 @@ require credentials or expose environment diagnostics. `builder.yaml` describes
 one .NET 10 web component, listening on port 8080 with `/health` as its health
 check. The manifest relies on Builder defaults for root routing, port 8080, and
 HTTP 200 as the successful health-check status.
+
+Open `/demo` for the visual showcase and template thumbnail view. It uses
+self-contained HTML, CSS, and JavaScript with no external assets or packages.
+The request buttons display actual endpoint responses and errors; the page does
+not report deployment status. Endpoint links remain usable without JavaScript.
+The original `/` plain-text contract is unchanged.
 
 ## Getting Started
 
@@ -84,7 +91,8 @@ bash scripts/smoke-test.sh
 
 The script publishes independently, starts and stops only its own processes, and
 checks exact greeting/health bodies, HTTP 404, and unset, empty, and customized
-`SAMPLE_GREETING` values. It uses port 8080; stop your earlier local run first.
+`SAMPLE_GREETING` values, plus `/demo` HTML and encoded greeting content.
+It uses port 8080; stop your earlier local run first.
 The GitHub Actions workflow runs the same check on pull requests and changes to
 `main`. Generated `bin/` and `obj/` files are not committed.
 
